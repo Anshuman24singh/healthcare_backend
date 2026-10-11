@@ -1,9 +1,8 @@
-from django.shortcuts import render
-
-# Create your views here.
 
 from django.shortcuts import get_object_or_404
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
+from rest_framework.views import APIView
+from rest_framework.response import Response
 
 from patients.models import Patient
 from doctors.models import Doctor
@@ -25,27 +24,27 @@ class MappingListCreateView(generics.ListCreateAPIView):
         serializer.save(assigned_by=self.request.user)
 
 
-class MappingDeleteView(generics.DestroyAPIView):
-    serializer_class = MappingSerializer
+class PatientDoctorsOrDeleteView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_queryset(self):
-        return PatientDoctorMapping.objects.filter(
-            patient__created_by=self.request.user
-        )
-
-
-class PatientDoctorsView(generics.ListAPIView):
-    serializer_class = DoctorSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
+    def get(self, request, pk):
         patient = get_object_or_404(
             Patient,
-            pk=self.kwargs["patient_id"],
-            created_by=self.request.user,
+            pk=pk,
+            created_by=request.user,
         )
-
-        return Doctor.objects.filter(
+        doctors = Doctor.objects.filter(
             patient_mappings__patient=patient
         ).order_by("id").distinct()
+
+        return Response(DoctorSerializer(doctors, many=True).data)
+
+    def delete(self, request, pk):
+        mapping = get_object_or_404(
+            PatientDoctorMapping.objects.filter(
+                patient__created_by=request.user
+            ),
+            pk=pk,
+        )
+        mapping.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
