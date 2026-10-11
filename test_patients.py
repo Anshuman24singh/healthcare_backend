@@ -4,8 +4,7 @@ import urllib.request
 import urllib.error
 
 BASE_URL = "http://127.0.0.1:8000"
-ACCESS_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzkxNzA3ODQwLCJpYXQiOjE3OTE3MDYwNDAsImp0aSI6IjJiMmUxOTkyYTg4ZjQ4ZmNiNjM3YzZjNmExMWMwNWFlIiwidXNlcl9pZCI6IjEifQ.ok6Jzh9m-ZwIuPDbReTmx6IDMRaAos73058_o4UN3kU"
-
+ACCESS_TOKEN = input("Paste your current JWT access token: ").strip()
 
 request = urllib.request.Request(
     f"{BASE_URL}/api/patients/",
