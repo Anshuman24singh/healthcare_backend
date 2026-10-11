@@ -4,7 +4,10 @@ import urllib.request
 import urllib.error
 
 BASE_URL = "http://127.0.0.1:8000"
-ACCESS_TOKEN = input("Paste your current JWT access token: ").strip().strip('"').strip("'")
+ACCESS_TOKEN = input(
+    "Paste your current JWT access token: "
+).strip().strip('"').strip("'")
+
 
 def send_request(path, method="GET", data=None):
     body = None if data is None else json.dumps(data).encode("utf-8")
@@ -34,8 +37,13 @@ def send_request(path, method="GET", data=None):
         print(error.read().decode("utf-8"))
         return None
 
+    except urllib.error.URLError as error:
+        print(f"\nCould not connect to {BASE_URL}")
+        print(error)
+        return None
 
-# First create a new patient because the earlier test patient was deleted.
+
+# 1. Create a new patient
 patient_data = {
     "name": "Rahul Sharma",
     "age": 29,
@@ -46,10 +54,10 @@ patient_data = {
 
 patient = send_request("/api/patients/", "POST", patient_data)
 
-if patient:
+if patient and "id" in patient:
     patient_id = patient["id"]
 
-    # Create a doctor if one with this email doesn't already exist.
+    # 2. Find an existing doctor or create one
     doctor_data = {
         "name": "Dr. Priya Sharma",
         "specialization": "Cardiology",
@@ -59,18 +67,23 @@ if patient:
     }
 
     doctors = send_request("/api/doctors/", "GET")
+
     doctor = next(
         (
-            item for item in (doctors or [])
+            item
+            for item in (doctors or [])
             if item["email"] == doctor_data["email"]
         ),
         None,
     )
 
     if not doctor:
-        doctor = send_request("/api/doctors/", "POST", doctor_data)
+        doctor = send_request(
+            "/api/doctors/", "POST", doctor_data
+        )
 
-    if doctor:
+    # 3. Create a patient-doctor mapping
+    if doctor and "id" in doctor:
         mapping = send_request(
             "/api/mappings/",
             "POST",
@@ -80,14 +93,20 @@ if patient:
             },
         )
 
+        # 4. List all mappings
         send_request("/api/mappings/", "GET")
-        send_request(
-            f"/api/mappings/patient/{patient_id}/",
-            "GET",
-        )
 
-        send_request(
-            "/api/mappings/",
-             "POST",
-            {"patient": 2, "doctor": 1}
-        )
+        # 5. List doctors assigned to this patient
+        # Updated URL to match the assignment
+        send_request(f"/api/mappings/{patient_id}/", "GET")
+
+        # 6. Check duplicate prevention only if mapping creation succeeded
+        if mapping and "id" in mapping:
+            send_request(
+                "/api/mappings/",
+                "POST",
+                {
+                    "patient": patient_id,
+                    "doctor": doctor["id"],
+                },
+            )
