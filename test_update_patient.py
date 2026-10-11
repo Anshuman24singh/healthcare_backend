@@ -4,7 +4,8 @@ import urllib.request
 import urllib.error
 
 BASE_URL = "http://127.0.0.1:8000"
-ACCESS_TOKEN = input("Paste your current JWT access token: ").strip()
+ACCESS_TOKEN = input("Paste your current JWT access token: ").strip().strip('"').strip("'")
+
 PATIENT_ID = 1
 
 updated_data = {

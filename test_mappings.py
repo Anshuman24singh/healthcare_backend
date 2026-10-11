@@ -4,7 +4,7 @@ import urllib.request
 import urllib.error
 
 BASE_URL = "http://127.0.0.1:8000"
-ACCESS_TOKEN = input("Paste your current JWT access token: ").strip()
+ACCESS_TOKEN = input("Paste your current JWT access token: ").strip().strip('"').strip("'")
 
 def send_request(path, method="GET", data=None):
     body = None if data is None else json.dumps(data).encode("utf-8")
